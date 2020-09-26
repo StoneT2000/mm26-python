@@ -82,21 +82,7 @@ class Strategy:
         self.logger.info("Moving maybe")
         self.memory.set_value("last_action", "MOVE")
 
-        p = random.randint(0, 3)
-        dx = 0
-        dy = 0
-        if p == 0:
-            dx = 1
-        elif p == 1:
-            dx = -1
-        elif p == 2:
-            dy = 1
-        elif p == 3:
-            dy = -1
-
-        target_pos: Position = self.curr_pos.create(self.curr_pos.x + dx, self.curr_pos.y + dy, self.curr_pos.get_board_id())
         move_pos = self.pick_open_spot_to_move()
-        self.logger.info("target_pos: " + self.get_position_str(target_pos))
         self.logger.info("MovePos: " + self.get_position_str(move_pos))
         #move_pos.create(move_pos.x, move_pos.y, move_pos.get_board_id()),
         decision = CharacterDecision(
@@ -134,7 +120,6 @@ class Strategy:
             tile: Tile = self.player_board.get_tile_at(pos)
             if tile.type == "BLANK":
                 movable_deltas.append(delta)
-                return pos
 
         if (len(movable_deltas) == 0):
             return self.curr_pos
