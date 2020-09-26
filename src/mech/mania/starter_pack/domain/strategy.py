@@ -13,6 +13,7 @@ from mech.mania.starter_pack.domain.api import API
 from mech.mania.starter_pack.domain.bfs_deltas import bfs_deltas
 from mech.mania.starter_pack.domain.model.items.weapon import Weapon
 import mech.mania.starter_pack.domain.decisions as decisions
+import mech.mania.starter_pack.domain.roles as roles
 
 class Strategy:
 
@@ -24,11 +25,14 @@ class Strategy:
     api: API
     game_state: GameState
 
+    role: str
+
     def __init__(self, memory):
         self.memory = memory
         self.logger = logging.getLogger('strategy')
         self.logger.setLevel(logging.DEBUG)
         logging.basicConfig(level = logging.INFO)
+        self.role = roles.GAIN_XP
 
     def make_decision(self, player_name: str, game_state: GameState) -> CharacterDecision:
         """
@@ -48,8 +52,18 @@ class Strategy:
         self.logger.info("player at " + self.get_position_str(self.curr_pos))
         
 
+        # Figure out role
+        if self.my_player.get_current_health() <= 10:
+            self.role = roles.REST
+        else: 
+            self.role = roles.GAIN_XP
+        self.memory.set_value("role", self.role)
+
         last_action, type = self.memory.get_value("last_action", str)
+        last_role, type = self.memory.get_value("role", str)
+        
         self.logger.info("last action " + str(last_action))
+        self.logger.info("last role " + str(last_role))
         # if last_action is not None and last_action == "PICKUP":
         #     self.memory.set_value("last_action", "EQUIP")
         #     self.logger.info("Equipping item")
@@ -69,66 +83,56 @@ class Strategy:
         #         action_position=None,
         #         action_index=0
         #     )
+        self.logger.info("====ROLE " + self.role + "====")
+        if (self.role == roles.REST):
+            sp = self.my_player.get_spawn_point()
+            
+            path = self.get_path(self.curr_pos, sp)
+            self.logger.info("Moving to " + self.get_position_str(path[0])  + " to get to spawn point to rest at " + self.get_position_str(sp))
+            decision = decisions.move(path[0])
+            self.logger.info("Moving!")
+            return decision
+        elif (self.role == roles.GAIN_XP):
+            self.logger.info("Moving to enemy maybe")
+            weapon: Weapon = self.my_player.get_weapon()
+            enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
+            self.logger.info("Found " + str(len(enemies))  + " enemies");
+            if enemies is None or len(enemies) > 0:
+                enemy_pos = enemies[0].position
+                self.logger.info("Closest enemy at " + self.get_position_str(enemy_pos))
+                if weapon.get_range() >= self.curr_pos.manhattan_distance(enemy_pos):
+                    self.logger.info("Enemy at " + self.get_position_str(enemy_pos) +" within range to attack");
+                    return decisions.attack_monster(enemies[0])
 
-        self.logger.info("Moving to enemy maybe")
-        weapon: Weapon = self.my_player.get_weapon()
-        enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
-        self.logger.info("Found " + str(len(enemies))  + " enemies");
-        if enemies is None or len(enemies) > 0:
-            enemy_pos = enemies[0].position
-            self.logger.info("Closest enemy at " + self.get_position_str(enemy_pos))
-            if weapon.get_range() >= self.curr_pos.manhattan_distance(enemy_pos):
-                self.logger.info("Enemy at " + self.get_position_str(enemy_pos) +" within range to attack");
-                return decisions.attack_monster(enemies[0])
+                path = self.get_path(self.curr_pos, enemies[0].position)
+                next_pos = path[0]
+                self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
+                return decisions.move(next_pos)
+            
+            self.logger.info("Moving maybe")
+            self.memory.set_value("last_action", "MOVE")
 
-            path = self.get_path(self.curr_pos, enemies[0].position)
-            next_pos = path[0]
-            self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
-            # return CharacterDecision(
-            #     decision_type="MOVE",
-            #     action_position=next_pos,
-            #     action_index=0
-            # )
-            return decisions.move(next_pos)
-
-        self.logger.info("Attacking enemy maybe")
-        # enemy_pos = enemies[0].get_position()
-        # if self.curr_pos.manhattan_distance(enemy_pos) <= weapon.get_range():
-        #     self.logger.info("Attacking enemy")
-        #     self.memory.set_value("last_action", "ATTACK")
-        #     return CharacterDecision(
-        #         decision_type="ATTACK",
-        #         action_position=enemy_pos,
-        #         action_index=0
-        #     )
-
-        
-        self.logger.info("Moving maybe")
-        self.memory.set_value("last_action", "MOVE")
-
-        move_pos = self.pick_open_spot_to_move()
-        self.logger.info("MovePos: " + self.get_position_str(move_pos))
-        #move_pos.create(move_pos.x, move_pos.y, move_pos.get_board_id()),
-        # decision = CharacterDecision(
-        #     decision_type="MOVE",
-        #     action_position=move_pos,
-        #     action_index=0
-        # )
-        decision = decisions.move(move_pos)
-        self.logger.info("Moving!")
-        return decision
+            move_pos = self.pick_open_spot_to_move()
+            self.logger.info("MovePos: " + self.get_position_str(move_pos))
+            decision = decisions.move(move_pos)
+            self.logger.info("Moving!")
+            
+            return decision
 
 
     def get_all_enemies(self, pos: Position):
         enemies = []
         deltas = bfs_deltas[128][1:]
         # player: Player = self.my_player
-        game_state: GameState = self.game_state
         # for k in game_state.monster_names:
         #     monster: Monster = game_state.monster_names[k]
         #     enemies.append(monster)
-        enemies: list[Monster] = self.game_state.get_monsters_on_board(self.curr_pos.get_board_id())
-        enemies = sorted(enemies, key=lambda m: m.position.manhattan_distance(pos))
+        all_monsters: list[Monster] = self.game_state.get_monsters_on_board(self.curr_pos.get_board_id())
+        for monster in all_monsters:
+            if monster.get_current_health() > 0:
+                enemies.append(monster)
+        # sort by level then distance
+        enemies = sorted(enemies, key=lambda m: (m.get_level(), m.position.manhattan_distance(pos)))
         return enemies
         # for delta in deltas:
         #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
