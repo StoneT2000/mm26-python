@@ -9,6 +9,8 @@ from mech.mania.starter_pack.domain.model.game_state import GameState
 from mech.mania.starter_pack.domain.api import API
 from mech.mania.starter_pack.domain.bfs_deltas import bfs_deltas
 from mech.mania.starter_pack.domain.model.characters.player import Player
+from mech.mania.starter_pack.domain.model.items.weapon import Weapon
+import mech.mania.starter_pack.domain.decisions as decisions
 
 class Strategy:
     def __init__(self, memory):
@@ -24,6 +26,7 @@ class Strategy:
         game_state (GameState): The current game state
         """
         self.api = API(game_state, player_name)
+        self.game_state = game_state
         self.my_player = game_state.get_all_players()[player_name]
         self.board = game_state.get_pvp_board()
         self.player_board = game_state.get_board(player_name)
@@ -57,20 +60,24 @@ class Strategy:
         #     )
 
         self.logger.info("Moving to enemy maybe")
-        weapon = self.my_player.get_weapon()
-        enemies: list[Monster] = self.get_all_enemies()
+        weapon: Weapon = self.my_player.get_weapon()
+        enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
         self.logger.info("Found " + str(len(enemies))  + " enemies");
         if enemies is None or len(enemies) > 0:
+            enemy_pos = enemies[0].position
+            if weapon.get_range() >= self.curr_pos.manhattan_distance(enemy_pos):
+                self.logger.info("Enemy at " + self.get_position_str(enemy_pos) +" within range to attack");
+                return decisions.attack_monster(enemies[0])
+
             path = self.get_path(self.curr_pos, enemies[0].position)
             next_pos = path[0]
             self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
-            # self.memory.set_value("last_action", "MOVE")
-
-            return CharacterDecision(
-                decision_type="MOVE",
-                action_position=next_pos,
-                action_index=0
-            )
+            # return CharacterDecision(
+            #     decision_type="MOVE",
+            #     action_position=next_pos,
+            #     action_index=0
+            # )
+            return decisions.move(next_pos)
 
         self.logger.info("Attacking enemy maybe")
         # enemy_pos = enemies[0].get_position()
@@ -90,11 +97,12 @@ class Strategy:
         move_pos = self.pick_open_spot_to_move()
         self.logger.info("MovePos: " + self.get_position_str(move_pos))
         #move_pos.create(move_pos.x, move_pos.y, move_pos.get_board_id()),
-        decision = CharacterDecision(
-            decision_type="MOVE",
-            action_position=move_pos,
-            action_index=0
-        )
+        # decision = CharacterDecision(
+        #     decision_type="MOVE",
+        #     action_position=move_pos,
+        #     action_index=0
+        # )
+        decision = decisions.move(move_pos)
         self.logger.info("Moving!")
         return decision
 
