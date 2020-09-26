@@ -1,5 +1,6 @@
 import logging
-
+import math
+import random
 from mech.mania.starter_pack.domain.model.characters.character_decision import CharacterDecision
 from mech.mania.starter_pack.domain.model.characters.position import Position
 from mech.mania.starter_pack.domain.model.game_state import GameState
@@ -79,11 +80,25 @@ class Strategy:
         
         self.logger.info("Moving maybe")
         self.memory.set_value("last_action", "MOVE")
-        target_pos: Position = self.curr_pos
-        self.logger.info("On board " + str(target_pos.board_id) +" move to (" + str(target_pos.x) + ", " + str(target_pos.y) + ")")
+
+        p = random.randint(0, 3)
+        dx = 0
+        dy = 0
+        if p == 0:
+            dx = 1
+        elif p == 1:
+            dx = -1
+        elif p == 2:
+            dy = 1
+        elif p == 3:
+            dy = -1
+
+        target_pos: Position = self.curr_pos.create(self.curr_pos.x + dx, self.curr_pos.y + dy, self.curr_pos.get_board_id())
+        self.logger.info("TargetPos: " + self.get_position_str(target_pos))
+
         decision = CharacterDecision(
             decision_type="MOVE",
-            action_position=target_pos.create(target_pos.x + 1, target_pos.y, target_pos.get_board_id()),
+            action_position=target_pos.create(target_pos.x, target_pos.y, target_pos.get_board_id()),
             action_index=0
         )
         self.logger.info("Moving!")
