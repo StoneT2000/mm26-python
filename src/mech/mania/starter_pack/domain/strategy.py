@@ -27,6 +27,9 @@ class Strategy:
 
         self.logger.info("In make_decision")
 
+        self.logger.info("player at " + self.get_position_str(self.curr_pos))
+        
+
         last_action, type = self.memory.get_value("last_action", str)
         self.logger.info("last action " + str(last_action))
         # if last_action is not None and last_action == "PICKUP":
@@ -78,10 +81,12 @@ class Strategy:
         self.memory.set_value("last_action", "MOVE")
         target_pos: Position = self.curr_pos
         target_pos.y += 1
+        target_pos.x = 1
+        target_pos.y = 2
         self.logger.info("On board " + str(target_pos.board_id) +" move to (" + str(target_pos.x) + ", " + str(target_pos.y) + ")")
         decision = CharacterDecision(
             decision_type="MOVE",
-            action_position=newposition,
+            action_position=target_pos,
             action_index=0
         )
         self.logger.info("Moving!")
@@ -98,3 +103,6 @@ class Strategy:
         else:
             pos = path[player.get_speed() - 1]
         return pos
+
+    def get_position_str(self, pos: Position):
+        return str(pos.get_board_id()) + " | " + str(pos.get_x()) + ", " + str(pos.get_y())
