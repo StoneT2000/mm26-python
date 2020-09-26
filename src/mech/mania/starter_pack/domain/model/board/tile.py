@@ -15,17 +15,17 @@ class Tile:
 
         self.items = []
         for item in proto_tile.items:
-            if isinstance(item, item_pb2.Clothes):
+            if item.HasField("clothes"):
                 self.items.append(Clothes(item.clothes))
-            elif isinstance(item, item_pb2.Hat):
+            elif item.HasField("hat"):
                 self.items.append(Hat(item.hat))
-            elif isinstance(item, item_pb2.Shoes):
+            elif item.HasField("shoes"):
                 self.items.append(Shoes(item.shoes))
-            elif isinstance(item, item_pb2.Accessory):
+            elif item.HasField("accessory"):
                 self.items.append(Accessory(item.accessory))
-            elif isinstance(item, item_pb2.Weapon):
+            elif item.HasField("weapon"):
                 self.items.append(Weapon(item.weapon))
-            elif isinstance(item, item_pb2.Consumable):
+            elif item.HasField("consumable"):
                 self.items.append(Consumable(item.consumable))
 
         if proto_tile.tile_type == board_pb2.Tile.TileType.VOID:
