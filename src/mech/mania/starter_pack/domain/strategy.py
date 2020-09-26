@@ -5,10 +5,10 @@ from mech.mania.starter_pack.domain.model.characters.character_decision import C
 from mech.mania.starter_pack.domain.model.characters.monster import Monster
 from mech.mania.starter_pack.domain.model.characters.position import Position
 from mech.mania.starter_pack.domain.model.board.tile import Tile
+from mech.mania.starter_pack.domain.model.characters.player import Player
 from mech.mania.starter_pack.domain.model.game_state import GameState
 from mech.mania.starter_pack.domain.api import API
 from mech.mania.starter_pack.domain.bfs_deltas import bfs_deltas
-from mech.mania.starter_pack.domain.model.characters.player import Player
 from mech.mania.starter_pack.domain.model.items.weapon import Weapon
 import mech.mania.starter_pack.domain.decisions as decisions
 
@@ -124,8 +124,11 @@ class Strategy:
 
 
     # feel free to write as many helper functions as you need!
-    def find_position_to_move(self, player: Position, destination: Position) -> Position:
+    def find_position_to_move(self, player: Player, destination: Position) -> Position:
         path = self.api.find_path(player.get_position(), destination)
+        # path can be empty if player.get_position() == destination
+        if len(path) == 0:
+            return player.get_position()
         pos = None
         if len(path) < player.get_speed():
             pos = path[-1]
