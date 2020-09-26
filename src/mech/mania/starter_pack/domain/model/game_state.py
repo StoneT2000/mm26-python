@@ -2,6 +2,7 @@ from mech.mania.engine.domain.model import game_pb2
 from mech.mania.starter_pack.domain.model.board.board import Board
 from mech.mania.starter_pack.domain.model.characters.monster import Monster
 from mech.mania.starter_pack.domain.model.characters.player import Player
+from mech.mania.starter_pack.domain.model.characters.position import Position
 
 
 class GameState:
