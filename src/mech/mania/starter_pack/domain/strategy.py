@@ -3,6 +3,7 @@ import math
 import random
 from mech.mania.starter_pack.domain.model.characters.character_decision import CharacterDecision
 from mech.mania.starter_pack.domain.model.characters.position import Position
+from mech.mania.starter_pack.domain.model.board.tile import Tile
 from mech.mania.starter_pack.domain.model.game_state import GameState
 from mech.mania.starter_pack.domain.api import API
 
@@ -94,8 +95,10 @@ class Strategy:
             dy = -1
 
         target_pos: Position = self.curr_pos.create(self.curr_pos.x + dx, self.curr_pos.y + dy, self.curr_pos.get_board_id())
-        self.logger.info("TargetPos: " + self.get_position_str(target_pos))
-
+        move_pos = self.pick_open_spot_to_move()
+        self.logger.info("target_pos: " + self.get_position_str(target_pos))
+        self.logger.info("MovePos: " + self.get_position_str(move_pos))
+        #move_pos.create(move_pos.x, move_pos.y, move_pos.get_board_id()),
         decision = CharacterDecision(
             decision_type="MOVE",
             action_position=target_pos.create(target_pos.x, target_pos.y, target_pos.get_board_id()),
@@ -117,3 +120,18 @@ class Strategy:
 
     def get_position_str(self, pos: Position):
         return str(pos.get_board_id()) + " | " + str(pos.get_x()) + ", " + str(pos.get_y())
+
+    def pick_open_spot_to_move(self) -> Position:
+        deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+        for delta in deltas:
+            dx = delta[0]
+            dy = delta[1]
+            pos: Position = self.curr_pos.create(
+                self.curr_pos.x + dx,
+                self.curr_pos.y + dy,
+                self.curr_pos.get_board_id())
+            tile: Tile = self.player_board.get_tile_at(pos)
+            if tile.type == "BLANK":
+                return pos
+
+        return self.curr_pos
