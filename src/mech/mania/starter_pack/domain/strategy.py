@@ -11,7 +11,9 @@ from mech.mania.starter_pack.domain.model.characters.player import Player
 from mech.mania.starter_pack.domain.model.game_state import GameState
 from mech.mania.starter_pack.domain.api import API
 from mech.mania.starter_pack.domain.bfs_deltas import bfs_deltas
+from mech.mania.starter_pack.domain.model.items.accessory import Accessory
 from mech.mania.starter_pack.domain.model.items.clothes import Clothes
+from mech.mania.starter_pack.domain.model.items.consumable import Consumable
 from mech.mania.starter_pack.domain.model.items.hat import Hat
 from mech.mania.starter_pack.domain.model.items.item import Item
 from mech.mania.starter_pack.domain.model.items.weapon import Weapon
@@ -248,3 +250,10 @@ class Strategy:
             return "Weapon: ATK {atk}, RANGE: {range}".format(atk=item.get_attack(), range=item.get_range())
         elif (isinstance(item, Clothes)):
             return "Clothes: Stats {}".format(item.get_stats())
+        elif (isinstance(item, Accessory)):
+            return "Accessory: Stats {}".format(item.get_stats())
+        elif (isinstance(item, Hat)):
+            return "Hat: Stats {}".format(item.get_stats())
+        elif (isinstance(item, Consumable)):
+            return "Con: Stats {}".format(item.get_effect())
+        return "smth else"
