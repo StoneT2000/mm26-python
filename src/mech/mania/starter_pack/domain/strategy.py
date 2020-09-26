@@ -49,19 +49,22 @@ class Strategy:
 
         self.logger.info("In make_decision")
 
-        self.logger.info("player at " + self.get_position_str(self.curr_pos))
+        
         
 
         # Figure out role
-        if self.my_player.get_current_health() <= 10:
+        my_health = self.my_player.get_current_health()
+        spawn_point = self.my_player.get_spawn_point()
+        if my_health <= 10 or (self.equal_pos(self.curr_pos, spawn_point) and my_health <= self.my_player.get_max_health() - 10):
             self.role = roles.REST
         else: 
             self.role = roles.GAIN_XP
-        self.memory.set_value("role", self.role)
-
+       
+        self.logger.info("Player at " + self.get_position_str(self.curr_pos) + " | Health: " + str(my_health) + " | XP: " + str(self.my_player.get_experience()) + " | Total XP: " + str(self.my_player.get_total_experience()))
+    
         last_action, type = self.memory.get_value("last_action", str)
         last_role, type = self.memory.get_value("role", str)
-        
+        self.memory.set_value("role", self.role)
         self.logger.info("last action " + str(last_action))
         self.logger.info("last role " + str(last_role))
         # if last_action is not None and last_action == "PICKUP":
@@ -86,7 +89,6 @@ class Strategy:
         self.logger.info("====ROLE " + self.role + "====")
         if (self.role == roles.REST):
             sp = self.my_player.get_spawn_point()
-            
             path = self.get_path(self.curr_pos, sp)
             self.logger.info("Moving to " + self.get_position_str(path[0])  + " to get to spawn point to rest at " + self.get_position_str(sp))
             decision = decisions.move(path[0])
@@ -200,3 +202,6 @@ class Strategy:
             y,
             self.curr_pos.get_board_id())
         return pos
+
+    def equal_pos(self, pos1: Position, pos2: Position):
+        return pos1.x == pos2.x and pos1.y == pos2.y and pos1.get_board_id() == pos2.get_board_id()
