@@ -50,7 +50,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 1.2")
+        self.logger.info("Version: 1.6")
 
         
         
@@ -82,7 +82,11 @@ class Strategy:
             dx = delta[0]
             dy = delta[1]
             check_pos = self.create_pos(self.curr_pos.x + dx, self.curr_pos.y + dy)
-            tile: Tile = self.board.get_tile_at(check_pos)
+            # self.logger.info("Checking " + self.get_position_str(check_pos))
+            if (check_pos.x >= self.player_board.width or check_pos.x < 0 or check_pos.y < 0 or check_pos.y >= self.player_board.height):
+                continue
+            # self.logger.info("in map")
+            tile: Tile = self.player_board.get_tile_at(check_pos)
             items_on_tile = tile.get_items()
             # search for better items
             if (len(items_on_tile) > 0):
@@ -101,7 +105,7 @@ class Strategy:
         #         action_index=self.my_player.get_free_inventory_index()
         #     )
         self.logger.info("Picking up maybe")
-        tile_items = self.board.get_tile_at(self.curr_pos).items
+        tile_items = self.player_board.get_tile_at(self.curr_pos).items
         self.logger.info("Items on position: " + str(len(tile_items)))
         # if tile_items is not None or len(tile_items) > 0:
         #     self.logger.info("Picking up item")
