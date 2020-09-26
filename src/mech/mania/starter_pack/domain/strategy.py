@@ -50,7 +50,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 1.6")
+        self.logger.info("Version: 1.6 b")
 
         
         
@@ -96,6 +96,13 @@ class Strategy:
                 if isinstance(item, Weapon):
                     self.logger.info("Found weapon")
 
+        for x in range(self.player_board.width - 1):
+            for y in range(self.player_board.height - 1):
+                tile: Tile = self.player_board.get_grid()[x][y]
+                items_on_tile = tile.get_items()
+                # search for better items
+                if (len(items_on_tile) > 0):
+                    self.logger.info("Found items!")
         # if last_action is not None and last_action == "PICKUP":
         #     self.memory.set_value("last_action", "EQUIP")
         #     self.logger.info("Equipping item")

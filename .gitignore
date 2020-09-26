@@ -1,3 +1,4 @@
 # IntelliJ Idea files
 /.idea/
 .vscode/settings.json
+.DS_STORE
