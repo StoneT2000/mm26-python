@@ -52,7 +52,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 1.6")
+        self.logger.info("Version: 1.7")
 
         
         
@@ -69,7 +69,7 @@ class Strategy:
     
         last_action, type = self.memory.get_value("last_action", str)
         last_role, type = self.memory.get_value("role", str)
-        self.memory.set_value("role", self.role)
+        self.memory.set_value("role", "test_val")
         self.logger.info("last action " + str(last_action))
         self.logger.info("last role " + str(last_role))
 
