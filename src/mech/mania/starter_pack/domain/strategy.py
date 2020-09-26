@@ -76,6 +76,7 @@ class Strategy:
         self.logger.info("Found " + str(len(enemies))  + " enemies");
         if enemies is None or len(enemies) > 0:
             enemy_pos = enemies[0].position
+            self.logger.info("Closest enemy at " + self.get_position_str(enemy_pos))
             if weapon.get_range() >= self.curr_pos.manhattan_distance(enemy_pos):
                 self.logger.info("Enemy at " + self.get_position_str(enemy_pos) +" within range to attack");
                 return decisions.attack_monster(enemies[0])
@@ -127,7 +128,7 @@ class Strategy:
         #     monster: Monster = game_state.monster_names[k]
         #     enemies.append(monster)
         enemies: list[Monster] = self.game_state.get_monsters_on_board(self.curr_pos.get_board_id())
-        sorted(enemies, key=lambda m: m.position.manhattan_distance(pos))
+        enemies = sorted(enemies, key=lambda m: m.position.manhattan_distance(pos))
         return enemies
         # for delta in deltas:
         #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
