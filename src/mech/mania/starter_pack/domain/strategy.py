@@ -101,7 +101,7 @@ class Strategy:
         #move_pos.create(move_pos.x, move_pos.y, move_pos.get_board_id()),
         decision = CharacterDecision(
             decision_type="MOVE",
-            action_position=target_pos.create(target_pos.x, target_pos.y, target_pos.get_board_id()),
+            action_position=move_pos,
             action_index=0
         )
         self.logger.info("Moving!")
@@ -123,6 +123,7 @@ class Strategy:
 
     def pick_open_spot_to_move(self) -> Position:
         deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+        movable_deltas = []
         for delta in deltas:
             dx = delta[0]
             dy = delta[1]
@@ -132,6 +133,15 @@ class Strategy:
                 self.curr_pos.get_board_id())
             tile: Tile = self.player_board.get_tile_at(pos)
             if tile.type == "BLANK":
+                movable_deltas.append(delta)
                 return pos
 
-        return self.curr_pos
+        if (len(movable_deltas) == 0):
+            return self.curr_pos
+        f_delta = movable_deltas[random.randint(0, len(movable_deltas) - 1)]
+
+
+        return self.curr_pos.create(
+                self.curr_pos.x + f_delta[0],
+                self.curr_pos.y + f_delta[1],
+                self.curr_pos.get_board_id())
