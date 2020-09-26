@@ -2,11 +2,13 @@ import logging
 import math
 import random
 from mech.mania.starter_pack.domain.model.characters.character_decision import CharacterDecision
+from mech.mania.starter_pack.domain.model.characters.monster import Monster
 from mech.mania.starter_pack.domain.model.characters.position import Position
 from mech.mania.starter_pack.domain.model.board.tile import Tile
 from mech.mania.starter_pack.domain.model.game_state import GameState
 from mech.mania.starter_pack.domain.api import API
-
+from mech.mania.starter_pack.domain.bfs_deltas import bfs_deltas
+from mech.mania.starter_pack.domain.model.characters.player import Player
 
 class Strategy:
     def __init__(self, memory):
@@ -56,16 +58,19 @@ class Strategy:
 
         self.logger.info("Moving to enemy maybe")
         weapon = self.my_player.get_weapon()
-        # enemies = self.api.find_enemies_by_distance(self.curr_pos)
-        # self.logger.info("Found " + str(len(enemies))  + " enemies");
-        # if enemies is None or len(enemies) > 0:
-        #     self.logger.info("Moving to enemy")
-        #     self.memory.set_value("last_action", "MOVE")
-        #     return CharacterDecision(
-        #         decision_type="MOVE",
-        #         action_position=self.my_player.get_spawn_point(),
-        #         action_index=0
-        #     )
+        enemies: list[Monster] = self.get_all_enemies()
+        self.logger.info("Found " + str(len(enemies))  + " enemies");
+        if enemies is None or len(enemies) > 0:
+            path = self.get_path(self.curr_pos, enemies[0].position)
+            next_pos = path[0]
+            self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
+            # self.memory.set_value("last_action", "MOVE")
+
+            return CharacterDecision(
+                decision_type="MOVE",
+                action_position=next_pos,
+                action_index=0
+            )
 
         self.logger.info("Attacking enemy maybe")
         # enemy_pos = enemies[0].get_position()
@@ -94,6 +99,22 @@ class Strategy:
         return decision
 
 
+    def get_all_enemies(self, pos: Position):
+        enemies = []
+        deltas = bfs_deltas[128][1:]
+        # player: Player = self.my_player
+        game_state: GameState = self.game_state
+        for k, v in game_state.monster_names:
+            monster: Monster =  v
+            enemies.append(monster)
+        sorted(enemies, key=lambda m: m.position.manhattan_distance(pos))
+        return enemies
+        # for delta in deltas:
+        #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
+        #     tile: Tile = self.player_board.get_tile_at(check_pos)
+
+
+
     # feel free to write as many helper functions as you need!
     def find_position_to_move(self, player: Position, destination: Position) -> Position:
         path = self.api.find_path(player.get_position(), destination)
@@ -107,16 +128,30 @@ class Strategy:
     def get_position_str(self, pos: Position):
         return str(pos.get_board_id()) + " | " + str(pos.get_x()) + ", " + str(pos.get_y())
 
+
+    # greedy for now
+    def get_path(self, start: Position, end: Position):
+        deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+        lowest = start.manhattan_distance(end)
+        path = [start]
+        for delta in deltas:
+            dx = delta[0]
+            dy = delta[1]
+            check_pos: Position = self.create_pos(self.curr_pos.x + dx, self.curr_pos.y + dy)
+            dist = check_pos.manhattan_distance(end)
+            if dist < lowest:
+                path[0] = check_pos
+                lowest = dist
+        return path
+
+
     def pick_open_spot_to_move(self) -> Position:
         deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
         movable_deltas = []
         for delta in deltas:
             dx = delta[0]
             dy = delta[1]
-            pos: Position = self.curr_pos.create(
-                self.curr_pos.x + dx,
-                self.curr_pos.y + dy,
-                self.curr_pos.get_board_id())
+            pos: Position = self.create_pos(self.curr_pos.x + dx, self.curr_pos.y + dy)
             tile: Tile = self.player_board.get_tile_at(pos)
             if tile.type == "BLANK":
                 movable_deltas.append(delta)
@@ -130,3 +165,10 @@ class Strategy:
                 self.curr_pos.x + f_delta[0],
                 self.curr_pos.y + f_delta[1],
                 self.curr_pos.get_board_id())
+
+    def create_pos(self, x, y):
+        pos: Position = self.curr_pos.create(
+            x,
+            y,
+            self.curr_pos.get_board_id())
+        return pos
