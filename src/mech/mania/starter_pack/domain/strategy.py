@@ -50,7 +50,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 1.1")
+        self.logger.info("Version: 1.2")
 
         
         
@@ -85,6 +85,8 @@ class Strategy:
             tile: Tile = self.board.get_tile_at(check_pos)
             items_on_tile = tile.get_items()
             # search for better items
+            if (len(items_on_tile) > 0):
+                self.logger.info("Found items!")
             for item in items_on_tile:
                 self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
                 if isinstance(item, Weapon):
