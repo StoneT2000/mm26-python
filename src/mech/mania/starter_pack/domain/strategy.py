@@ -88,7 +88,6 @@ class Strategy:
             action_index=0
         )
         self.logger.info("Moving!")
-        self.curr_pos
         return decision
 
 
