@@ -28,4 +28,4 @@ function calculateManhattanDeltas(dist) {
   return manD;
 }
 
-fs.writeFileSync('bfs.txt', JSON.stringify(calculateManhattanDeltas(128)));
+fs.writeFileSync('bfs.txt', JSON.stringify(calculateManhattanDeltas(1024)));

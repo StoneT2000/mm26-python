@@ -15,3 +15,10 @@ def attack_monster(monster: Monster, item_index=0):
         action_position=monster.position,
         action_index=item_index
     )
+
+def pick_up_item(pos: Position, ind=0):
+    return CharacterDecision(
+        decision_type="PICKUP",
+        action_position=None,
+        action_index=ind
+    )

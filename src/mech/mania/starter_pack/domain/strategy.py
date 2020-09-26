@@ -11,6 +11,9 @@ from mech.mania.starter_pack.domain.model.characters.player import Player
 from mech.mania.starter_pack.domain.model.game_state import GameState
 from mech.mania.starter_pack.domain.api import API
 from mech.mania.starter_pack.domain.bfs_deltas import bfs_deltas
+from mech.mania.starter_pack.domain.model.items.clothes import Clothes
+from mech.mania.starter_pack.domain.model.items.hat import Hat
+from mech.mania.starter_pack.domain.model.items.item import Item
 from mech.mania.starter_pack.domain.model.items.weapon import Weapon
 import mech.mania.starter_pack.domain.decisions as decisions
 import mech.mania.starter_pack.domain.roles as roles
@@ -47,7 +50,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("In make_decision")
+        self.logger.info("Version: 1.1")
 
         
         
@@ -67,6 +70,26 @@ class Strategy:
         self.memory.set_value("role", self.role)
         self.logger.info("last action " + str(last_action))
         self.logger.info("last role " + str(last_role))
+
+        ### store our current stats and inven ###
+        weapon: Weapon = self.my_player.get_weapon() # should always be index 0
+        hat: Hat = self.my_player.get_hat() # always index 1
+        clothes: Clothes = self.my_player.get_clothes() # always index 2
+
+        # BFS search around for stuff
+        deltas_1024 = bfs_deltas[1024]
+        for delta in deltas_1024:
+            dx = delta[0]
+            dy = delta[1]
+            check_pos = self.create_pos(self.curr_pos.x + dx, self.curr_pos.y + dy)
+            tile: Tile = self.board.get_tile_at(check_pos)
+            items_on_tile = tile.get_items()
+            # search for better items
+            for item in items_on_tile:
+                self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
+                if isinstance(item, Weapon):
+                    self.logger.info("Found weapon")
+
         # if last_action is not None and last_action == "PICKUP":
         #     self.memory.set_value("last_action", "EQUIP")
         #     self.logger.info("Equipping item")
@@ -96,7 +119,7 @@ class Strategy:
             return decision
         elif (self.role == roles.GAIN_XP):
             self.logger.info("Moving to enemy maybe")
-            weapon: Weapon = self.my_player.get_weapon()
+            
             enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
             self.logger.info("Found " + str(len(enemies))  + " enemies");
             if enemies is None or len(enemies) > 0:
@@ -124,7 +147,7 @@ class Strategy:
 
     def get_all_enemies(self, pos: Position):
         enemies = []
-        deltas = bfs_deltas[128][1:]
+        
         # player: Player = self.my_player
         # for k in game_state.monster_names:
         #     monster: Monster = game_state.monster_names[k]
@@ -205,3 +228,9 @@ class Strategy:
 
     def equal_pos(self, pos1: Position, pos2: Position):
         return pos1.x == pos2.x and pos1.y == pos2.y and pos1.get_board_id() == pos2.get_board_id()
+
+    def get_item_stats_str(self, item: Item):
+        if (isinstance(item, Weapon)):
+            return "Weapon: ATK {atk}, RANGE: {range}".format(atk=item.get_attack(), range=item.get_range())
+        elif (isinstance(item, Clothes)):
+            return "Clothes: Stats {}".format(item.get_stats())
