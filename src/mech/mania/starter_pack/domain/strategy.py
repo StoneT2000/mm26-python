@@ -112,7 +112,7 @@ class Strategy:
         deltas = bfs_deltas[128][1:]
         # player: Player = self.my_player
         game_state: GameState = self.game_state
-        for k, v in game_state.monster_names:
+        for v in game_state.monster_names:
             monster: Monster =  v
             enemies.append(monster)
         sorted(enemies, key=lambda m: m.position.manhattan_distance(pos))
