@@ -80,7 +80,6 @@ class Strategy:
         self.logger.info("Moving maybe")
         self.memory.set_value("last_action", "MOVE")
         target_pos: Position = self.curr_pos
-        target_pos.x += 1
         self.logger.info("On board " + str(target_pos.board_id) +" move to (" + str(target_pos.x) + ", " + str(target_pos.y) + ")")
         decision = CharacterDecision(
             decision_type="MOVE",
