@@ -1,6 +1,8 @@
 import logging
+from logging import Logger
 import math
 import random
+from mech.mania.starter_pack.domain.model.board.board import Board
 from mech.mania.starter_pack.domain.model.characters.character_decision import CharacterDecision
 from mech.mania.starter_pack.domain.model.characters.monster import Monster
 from mech.mania.starter_pack.domain.model.characters.position import Position
@@ -13,6 +15,15 @@ from mech.mania.starter_pack.domain.model.items.weapon import Weapon
 import mech.mania.starter_pack.domain.decisions as decisions
 
 class Strategy:
+
+    logger: Logger
+    board: Board
+    curr_pos: Position
+    player_board: Board
+    my_player: Player
+    api: API
+    game_state: GameState
+
     def __init__(self, memory):
         self.memory = memory
         self.logger = logging.getLogger('strategy')
@@ -112,9 +123,10 @@ class Strategy:
         deltas = bfs_deltas[128][1:]
         # player: Player = self.my_player
         game_state: GameState = self.game_state
-        for v in game_state.monster_names:
-            monster: Monster =  v
-            enemies.append(monster)
+        # for k in game_state.monster_names:
+        #     monster: Monster = game_state.monster_names[k]
+        #     enemies.append(monster)
+        enemies: list[Monster] = self.game_state.get_monsters_on_board(self.curr_pos.get_board_id())
         sorted(enemies, key=lambda m: m.position.manhattan_distance(pos))
         return enemies
         # for delta in deltas:
