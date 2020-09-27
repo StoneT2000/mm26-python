@@ -55,7 +55,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 3.0")
+        self.logger.info("Version: 3.0 p 1")
 
         
         
@@ -374,14 +374,26 @@ class Strategy:
         path = [start]
 
         queue = deque([start])
-        visited = {} # map node to its next node, so start maps to next_node, 2nd to last node maps to end
+        visited = {
+            
+        } # map node to its next node, so start maps to next_node, 2nd to last node maps to end
+        start_hash = self.hash_pos(start)
+        visited[start_hash] = None
         while(len(queue) > 0):
             pos = queue.popleft()
             # reach end, return next node
             curr_hash = self.hash_pos(pos)
             if self.equal_pos(pos, end):
-                next_node = self.read_pos_hash(visited[self.hash_pos(start)])
-                return [next_node]
+                # backtrack
+                bt_hash = self.hash_pos(pos)
+                while bt_hash in visited:
+                    prev_node_hash = visited[bt_hash]
+                    if prev_node_hash == self.hash_pos(start):
+                        next_node = self.read_pos_hash(bt_hash)
+                        self.logger.info("Bfs path start {} next {} end {}".format(self.get_position_str(start), self.get_position_str(next_node), self.get_position_str(end)))
+                        return [next_node]
+                    bt_hash = prev_node_hash
+                break
             for delta in deltas:
                 dx = delta[0]
                 dy = delta[1]
@@ -391,7 +403,7 @@ class Strategy:
                     check_hash = self.hash_pos(check_pos)
                     if check_hash not in visited:
                         queue.append(check_pos)
-                        visited[curr_hash] = check_hash
+                        visited[check_hash] = curr_hash
                 else:
                     pass
                 # dist = check_pos.manhattan_distance(end)
