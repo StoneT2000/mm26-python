@@ -55,7 +55,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 3.0 p 1")
+        self.logger.info("Version: 3.0 p 2")
 
         
         
@@ -382,7 +382,7 @@ class Strategy:
 
 
     # greedy for now
-    def get_path(self, start: Position, end: Position, avoid_hashes: set[int]):
+    def get_path(self, start: Position, end: Position, avoid_hashes):
         deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
         # deltas = bfs_deltas[1024]
         lowest = start.manhattan_distance(end)
