@@ -116,7 +116,7 @@ class Strategy:
                 self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
                 if isinstance(item, Weapon):
                     self.logger.info("Found weapon")
-                    time_to_delete = item.turns_to_deletion()
+                    time_to_delete = item.turns_to_deletion
                     # dont pick up weapons that take too long to retrieve
                     if (self.curr_pos.manhattan_distance(check_pos) >= time_to_delete - 2):
                         continue
@@ -137,20 +137,20 @@ class Strategy:
             m_attack = enemy.get_attack()
             m_wep_attack = enemy.get_weapon().get_attack()
             m_defence = enemy.get_defense()
-            p_wep_attack = weapon.attack()
+            p_wep_attack = weapon.get_attack()
             p_attack = self.my_player.get_attack()
             p_defence = self.my_player.get_defense()
             p_health = self.my_player.get_current_health()
             self.logger.info("Mattack {}".format(m_attack))
             m_damage_per_turn = m_wep_attack * ( (25 + m_attack) / 100)
-            m_actual_damage_per_turn = m_damage_per_turn - min(p_defence, 0.8 * m_damage_per_turn)
+            m_actual_damage_per_turn = math.ceil(m_damage_per_turn - min(p_defence, 0.8 * m_damage_per_turn))
             
             p_damage_per_turn = p_wep_attack * ((25 + p_attack) / 100)
-            p_actual_damage_per_turn = p_damage_per_turn - min(m_defence, 0.8 * p_damage_per_turn)
-            self.logger.info("Monster at {} deals {} dmg/turn; atk:{}, p_def:".format(self.get_position_str(enemy.get_position()), m_actual_damage_per_turn, m_attack, p_defence))
-            self.logger.info("Player deals {} dmg/turn".format(p_actual_damage_per_turn))
-            enemy_turns_to_win = p_health / m_damage_per_turn
-            my_turns_to_win = m_health / p_damage_per_turn
+            p_actual_damage_per_turn = math.ceil(p_damage_per_turn - min(m_defence, 0.8 * p_damage_per_turn))
+            # self.logger.info("Monster at {} deals {} dmg/turn; atk:{}, p_def:".format(self.get_position_str(enemy.get_position()), m_actual_damage_per_turn, m_attack, p_defence))
+            # self.logger.info("Player deals {} dmg/turn".format(p_actual_damage_per_turn))
+            enemy_turns_to_win = p_health / m_actual_damage_per_turn
+            my_turns_to_win = m_health / p_actual_damage_per_turn
             if (my_turns_to_win < enemy_turns_to_win - 1):
                 enemies.append(enemy)
 
