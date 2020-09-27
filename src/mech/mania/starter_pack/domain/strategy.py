@@ -52,7 +52,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 1.7")
+        self.logger.info("Version: 1.9")
 
         
         
@@ -66,7 +66,7 @@ class Strategy:
             self.role = roles.GAIN_XP
        
         self.logger.info("Player at " + self.get_position_str(self.curr_pos) + " | Health: " + str(my_health) + " | XP: " + str(self.my_player.get_experience()) + " | Total XP: " + str(self.my_player.get_total_experience()))
-    
+        self.logger.info("ATK: {}, SPD: {}, DEF: {}".format(self.my_player.get_attack(), self.my_player.get_speed(), self.my_player.get_defense()))
         last_action, type = self.memory.get_value("last_action", str)
         last_role, type = self.memory.get_value("role", str)
         self.memory.set_value("role", "test_val")
@@ -78,8 +78,27 @@ class Strategy:
         hat: Hat = self.my_player.get_hat() # always index 1
         clothes: Clothes = self.my_player.get_clothes() # always index 2
 
+        self.logger.info("Curr Weapon: ATK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
+
+        # if inventory has better weapon, equip it
+        inven: list[Item] = self.my_player.get_inventory()
+        best_wep_to_equip: Weapon = None
+        best_wep_to_equip_index: int = None
+        for i, item in enumerate(inven):
+            if isinstance(item, Weapon):
+                if item.get_attack() > weapon.attack:
+                    best_wep_to_equip = item
+                    best_wep_to_equip_index = i
+
+        if best_wep_to_equip != None:
+            self.logger.info("Equipping weapon at index {} with atk: {}".format(best_wep_to_equip_index, best_wep_to_equip.get_attack()))
+            return decisions.equip_item(best_wep_to_equip_index)
+
         # BFS search around for stuff
         deltas_1024 = bfs_deltas[1024]
+        best_wep_found: Weapon = None
+        best_wep_found_pos: Position = None
+        best_wep_found_index: int = None
         for delta in deltas_1024:
             dx = delta[0]
             dy = delta[1]
@@ -93,18 +112,54 @@ class Strategy:
             # search for better items
             if (len(items_on_tile) > 0):
                 self.logger.info("Found items!")
-            for item in items_on_tile:
+            for i, item in enumerate(items_on_tile):
                 self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
                 if isinstance(item, Weapon):
                     self.logger.info("Found weapon")
+                    time_to_delete = item.turns_to_deletion()
+                    # dont pick up weapons that take too long to retrieve
+                    if (self.curr_pos.manhattan_distance(check_pos) >= time_to_delete - 2):
+                        continue
+                        
+                    # best weapon to pickup is one that deals more damage, and more damage than all weapons on map that are found
+                    if (item.get_attack() > weapon.attack):
+                        if (best_wep_found == None or item.get_attack() > best_wep_found.get_attack()):
+                            best_wep_found = item
+                            best_wep_found_pos = check_pos
+                            best_wep_found_index = i
 
-        # for x in range(self.player_board.width - 1):
-        #     for y in range(self.player_board.height - 1):
-        #         tile: Tile = self.player_board.get_grid()[x][y]
-        #         items_on_tile = tile.get_items()
-        #         # search for better items
-        #         if (len(items_on_tile) > 0):
-        #             self.logger.info("Found items!")
+
+        # analyze enemies, remove those that would kill us 
+        sorted_difficulty_enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
+        enemies: list[Monster] = []
+        for enemy in sorted_difficulty_enemies:
+            m_health = enemy.get_current_health()
+            m_attack = enemy.get_attack()
+            m_wep_attack = enemy.get_weapon().get_attack()
+            m_defence = enemy.get_defense()
+            p_wep_attack = weapon.attack()
+            p_attack = self.my_player.get_attack()
+            p_defence = self.my_player.get_defense()
+            p_health = self.my_player.get_current_health()
+            self.logger.info("Mattack {}".format(m_attack))
+            m_damage_per_turn = m_wep_attack * ( (25 + m_attack) / 100)
+            m_actual_damage_per_turn = m_damage_per_turn - min(p_defence, 0.8 * m_damage_per_turn)
+            
+            p_damage_per_turn = p_wep_attack * ((25 + p_attack) / 100)
+            p_actual_damage_per_turn = p_damage_per_turn - min(m_defence, 0.8 * p_damage_per_turn)
+            self.logger.info("Monster at {} deals {} dmg/turn; atk:{}, p_def:".format(self.get_position_str(enemy.get_position()), m_actual_damage_per_turn, m_attack, p_defence))
+            self.logger.info("Player deals {} dmg/turn".format(p_actual_damage_per_turn))
+            enemy_turns_to_win = p_health / m_damage_per_turn
+            my_turns_to_win = m_health / p_damage_per_turn
+            if (my_turns_to_win < enemy_turns_to_win - 1):
+                enemies.append(enemy)
+
+        if (len(enemies) == 0):
+            self.logger.info("no killable enemies found, resting")
+            self.role = roles.REST
+
+        if (best_wep_found != None):
+            self.role = roles.PICK_UP_WEAPON
         
         # if last_action is not None and last_action == "PICKUP":
         #     self.memory.set_value("last_action", "EQUIP")
@@ -133,10 +188,18 @@ class Strategy:
             decision = decisions.move(path[0])
             self.logger.info("Moving!")
             return decision
+        elif (self.role == roles.PICK_UP_WEAPON):
+            target_pos = best_wep_found_pos;
+            if (self.equal_pos(target_pos, self.curr_pos)):
+                self.logger.info("Picking up weapon now under player into ind 0")
+                decision = decisions.pick_up_item(self.curr_pos, best_wep_found_index)
+                return decision
+            self.logger.info("Moving to pick up weapon at " + self.get_position_str(target_pos) + ", index: " + str(best_wep_found_index))
+            path = self.get_path(self.curr_pos, target_pos)
+            decision = decisions.move(path[0])
+            return decision
         elif (self.role == roles.GAIN_XP):
             self.logger.info("Moving to enemy maybe")
-            
-            enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
             self.logger.info("Found " + str(len(enemies))  + " enemies");
             if enemies is None or len(enemies) > 0:
                 enemy_pos = enemies[0].position

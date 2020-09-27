@@ -22,3 +22,10 @@ def pick_up_item(pos: Position, ind=0):
         action_position=None,
         action_index=ind
     )
+
+def equip_item(ind=0):
+    return CharacterDecision(
+        decision_type="EQUIP",
+        action_position=None,
+        action_index=ind
+    )
