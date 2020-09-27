@@ -83,8 +83,7 @@ class Strategy:
         clothes: Clothes = self.my_player.get_clothes() # always index 2
         accessory: Accessory = self.my_player.get_accessory()
 
-        self.logger.info("Curr Weapon: ATTACK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
-        self.logger.info("Curr Weapon P Stats: {}".format(self.get_item_stats_str(weapon)))
+        self.logger.info("Curr Weapon: {}".format(self.get_item_stats_str(weapon)))
         self.logger.info("Curr Clothes: {}".format(self.get_item_stats_str(clothes)))
         self.logger.info("Curr Hat: {}".format(self.get_item_stats_str(hat)))
         self.logger.info("Curr Shoes: {}".format(self.get_item_stats_str(shoes)))
@@ -476,7 +475,7 @@ class Strategy:
 
     def get_item_stats_str(self, item: Item):
         if (isinstance(item, Weapon)):
-            return "Weapon: ATK {atk}, RANGE: {range}".format(atk=item.get_attack(), range=item.get_range())
+            return "Weapon: ATK {atk}, RANGE: {range}, SPLASH: {splash}, {sts}".format(atk=item.get_attack(), range=item.get_range(), splash=item.get_splash_radius(), sts=self.stats_str(item))
         elif (isinstance(item, Clothes)):
             
 
