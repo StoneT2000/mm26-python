@@ -52,7 +52,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 1.9")
+        self.logger.info("Version: 2.0")
 
         
         
