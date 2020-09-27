@@ -99,10 +99,11 @@ class Strategy:
         for i, item in enumerate(inven):
             self.logger.info("Inven {} - {} - stats: {}".format(i, item, self.get_item_stats_str(item)))
             if isinstance(item, Weapon):
-                if item.get_attack() > weapon.attack:
-                    self.logger.info("Equipping weapon at index {} with atk: {}".format(i, item.get_attack()))
+                item_val = self.value_of_wearable(item)
+                if item_val > self.value_of_wearable(weapon):
+                    self.logger.info("Equipping weapon at index {} with stats: {}".format(i, self.get_item_stats_str(item)))
                     return decisions.equip_item(i)
-                elif item.get_attack() < weapon.attack:
+                elif item_val < self.value_of_wearable(weapon):
                     self.logger.info("Dropping weapon at {}".format(i))
                     return decisions.drop_item(i)
             elif isinstance(item, Clothes):
@@ -184,8 +185,9 @@ class Strategy:
                         
                             
                         # best weapon to pickup is one that deals more damage, and more damage than all weapons on map that are found
-                        if (item.get_attack() > weapon.attack):
-                            if (best_gears_found['weapon'] == None or item.get_attack() > best_gears_found['weapon'].get_attack()):
+                        item_val = self.value_of_wearable(item)
+                        if (item_val > self.value_of_wearable(weapon)):
+                            if (best_gears_found['weapon'] == None or item_val > self.value_of_wearable(best_gears_found['weapon'])):
                                 best_gears_found['weapon'] = item
                                 best_gears_found_pos['weapon'] = check_pos
                                 best_gears_found_index['weapon'] = i
@@ -512,7 +514,7 @@ class Strategy:
         if isinstance(item, Wearable):
             replacedItem = None
             if (isinstance(item, Weapon)):
-                replacedItem = self.my_player.get_weapon()
+                return item.get_attack() * item.stats.percent_attack_change
             elif (isinstance(item, Clothes)):
                 replacedItem = self.my_player.get_clothes()
             elif (isinstance(item, Accessory)):
