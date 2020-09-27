@@ -80,6 +80,7 @@ class Strategy:
         hat: Hat = self.my_player.get_hat() # always index 1
         shoes: Shoes = self.my_player.get_shoes()
         clothes: Clothes = self.my_player.get_clothes() # always index 2
+        accessory: Accessory = self.my_player.get_accessory()
 
         self.logger.info("Curr Weapon: ATK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
 
@@ -88,16 +89,34 @@ class Strategy:
         self.logger.info("Have {} inventory items".format(len(inven)))
         best_wep_to_equip: Weapon = None
         best_wep_to_equip_index: int = None
+        best_gear_to_equip: Wearable = None
+        best_gear_to_equip_index: int = None
         for i, item in enumerate(inven):
             self.logger.info("Inven {} - {}".format(i, item))
             if isinstance(item, Weapon):
                 if item.get_attack() > weapon.attack:
-                    best_wep_to_equip = item
-                    best_wep_to_equip_index = i
-
-        if best_wep_to_equip != None:
-            self.logger.info("Equipping weapon at index {} with atk: {}".format(best_wep_to_equip_index, best_wep_to_equip.get_attack()))
-            return decisions.equip_item(best_wep_to_equip_index)
+                    self.logger.info("Equipping weapon at index {} with atk: {}".format(i, item.get_attack()))
+                    return decisions.equip_item(i)
+            elif isinstance(item, Clothes):
+                item_val = self.value_of_wearable(item)
+                if (item_val > self.value_of_wearable(clothes)):
+                    self.logger.info("Equipping clothes at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
+                    return decisions.equip_item(i)
+            elif isinstance(item, Hat):
+                item_val = self.value_of_wearable(item)
+                if (item_val > self.value_of_wearable(hat)):
+                    self.logger.info("Equipping hat at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
+                    return decisions.equip_item(i)
+            elif isinstance(item, Shoes):
+                item_val = self.value_of_wearable(item)
+                if (item_val > self.value_of_wearable(shoes)):
+                    self.logger.info("Equipping shoes at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
+                    return decisions.equip_item(i)
+            elif isinstance(item, Accessory):
+                item_val = self.value_of_wearable(item)
+                if (item_val > self.value_of_wearable(accessory)):
+                    self.logger.info("Equipping accessory at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
+                    return decisions.equip_item(i)
 
         # BFS search around for stuff
         deltas_1024 = bfs_deltas[1024]
@@ -106,18 +125,21 @@ class Strategy:
             'clothes': None,
             'shoes': None,
             'hat': None,
+            'accessory': None,
         }
         best_gears_found_pos: dict[str, Position] = {
             'weapon': None,
             'clothes': None,
             'shoes': None,
             'hat': None,
+            'accessory': None,
         }
         best_gears_found_index: dict[str, Position] = {
             'weapon': None,
             'clothes': None,
             'shoes': None,
             'hat': None,
+            'accessory': None,
         }
         for delta in deltas_1024:
             dx = delta[0]
@@ -130,8 +152,6 @@ class Strategy:
             tile: Tile = self.player_board.get_tile_at(check_pos)
             items_on_tile = tile.get_items()
             # search for better items
-            if (len(items_on_tile) > 0):
-                self.logger.info("Found items!")
             for i, item in enumerate(items_on_tile):
                 self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
                 if isinstance(item, Wearable):
@@ -170,6 +190,13 @@ class Strategy:
                                 best_gears_found['hat'] = item
                                 best_gears_found_pos['hat'] = check_pos
                                 best_gears_found_index['hat'] = i
+                    elif isinstance(item, Accessory):
+                        item_val = self.value_of_wearable(item)
+                        if item_val > self.value_of_wearable(accessory):
+                            if (best_gears_found['accessory'] == None or item_val > self.value_of_wearable(best_gears_found['accessory'])):
+                                best_gears_found['accessory'] = item
+                                best_gears_found_pos['accessory'] = check_pos
+                                best_gears_found_index['accessory'] = i
 
         gears_to_pickup = 0
         for i, (k, v) in enumerate(best_gears_found.items()):
