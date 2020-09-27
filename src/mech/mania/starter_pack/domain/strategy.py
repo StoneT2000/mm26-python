@@ -300,7 +300,7 @@ class Strategy:
             path = self.get_path(self.curr_pos, sp, dangerous_pos_hashes)
             self.logger.info("Moving to " + self.get_position_str(path[0])  + " to get to spawn point to rest at " + self.get_position_str(sp))
 
-            path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path - 1))
+            path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path) - 1)
 
             decision = decisions.move(path[path_index])
             self.logger.info("Moving!")
@@ -320,7 +320,7 @@ class Strategy:
                 return decision
             self.logger.info("Moving to pick up gear at " + self.get_position_str(target_pos) + ", index: " + str(target_index))
             path = self.get_path(self.curr_pos, target_pos, dangerous_pos_hashes)
-            path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path - 1))
+            path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path) - 1)
 
             decision = decisions.move(path[path_index])
             return decision
@@ -335,7 +335,7 @@ class Strategy:
                     return decisions.attack_monster(enemies[0])
 
                 path = self.get_path(self.curr_pos, enemies[0].position, dangerous_pos_hashes)
-                path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path - 1))
+                path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path) - 1)
                 next_pos = path[path_index]
                 self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
                 return decisions.move(next_pos)
