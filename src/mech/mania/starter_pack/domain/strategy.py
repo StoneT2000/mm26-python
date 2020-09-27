@@ -66,7 +66,7 @@ class Strategy:
         my_health = self.my_player.get_current_health()
         spawn_point = self.my_player.get_spawn_point()
         if my_health <= 10 or (self.equal_pos(self.curr_pos, spawn_point) and my_health <= self.my_player.get_max_health() - 10):
-            self.role = roles.REST
+            self.role = roles.GAIN_XP
         else: 
             self.role = roles.GAIN_XP
        
