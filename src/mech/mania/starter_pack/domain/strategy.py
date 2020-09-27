@@ -83,6 +83,10 @@ class Strategy:
         accessory: Accessory = self.my_player.get_accessory()
 
         self.logger.info("Curr Weapon: ATK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
+        self.logger.info("Curr Clothes: {}".format(self.get_item_stats_str(clothes)))
+        self.logger.info("Curr Hat: {}".format(self.get_item_stats_str(hat)))
+        self.logger.info("Curr Shoes: {}".format(self.get_item_stats_str(shoes)))
+        self.logger.info("Curr Accessory: {}".format(self.get_item_stats_str(accessory)))
 
         # if inventory has better weapon, equip it
         inven: list[Item] = self.my_player.get_inventory()
