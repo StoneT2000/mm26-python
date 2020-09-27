@@ -55,7 +55,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 3.0 p 2")
+        self.logger.info("Version: 3.1")
 
         
         
@@ -251,20 +251,21 @@ class Strategy:
             my_turns_to_win = m_health / p_actual_damage_per_turn
             if (my_turns_to_win < enemy_turns_to_win - 1):
                 enemies.append(enemy)
-            else: 
-                dangerous_pos_hashes.add(self.hash_pos(enemy.position))
-                deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
-                # TODO: dont hardcode aggro range and the deltas to use
-                if enemy.get_aggro_range() > 1:
-                    deltas = bfs_deltas[4]
-                else:
-                    deltas = bfs_deltas[1]
-                for delta in deltas:
-                    dx = delta[0]
-                    dy = delta[1]
-                    check_pos: Position = self.create_pos(enemy.position.x + dx, enemy.position.y + dy)
-                    # tile: Tile = self.player_board.get_tile_at(check_pos)
-                    dangerous_pos_hashes.add(self.hash_pos(check_pos))
+            else:
+                if (enemy.position.manhattan_distance(self.curr_pos) > 2):
+                    dangerous_pos_hashes.add(self.hash_pos(enemy.position))
+                    deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+                    # TODO: dont hardcode aggro range and the deltas to use
+                    if enemy.get_aggro_range() > 1:
+                        deltas = bfs_deltas[4]
+                    else:
+                        deltas = bfs_deltas[1]
+                    for delta in deltas:
+                        dx = delta[0]
+                        dy = delta[1]
+                        check_pos: Position = self.create_pos(enemy.position.x + dx, enemy.position.y + dy)
+                        # tile: Tile = self.player_board.get_tile_at(check_pos)
+                        dangerous_pos_hashes.add(self.hash_pos(check_pos))
 
         if (len(enemies) == 0):
             self.logger.info("no killable enemies found, resting")
@@ -298,7 +299,10 @@ class Strategy:
             sp = self.my_player.get_spawn_point()
             path = self.get_path(self.curr_pos, sp, dangerous_pos_hashes)
             self.logger.info("Moving to " + self.get_position_str(path[0])  + " to get to spawn point to rest at " + self.get_position_str(sp))
-            decision = decisions.move(path[0])
+
+            path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path - 1))
+
+            decision = decisions.move(path[path_index])
             self.logger.info("Moving!")
             return decision
         elif (self.role == roles.PICK_UP_GEAR):
@@ -316,7 +320,9 @@ class Strategy:
                 return decision
             self.logger.info("Moving to pick up gear at " + self.get_position_str(target_pos) + ", index: " + str(target_index))
             path = self.get_path(self.curr_pos, target_pos, dangerous_pos_hashes)
-            decision = decisions.move(path[0])
+            path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path - 1))
+
+            decision = decisions.move(path[path_index])
             return decision
         elif (self.role == roles.GAIN_XP):
             self.logger.info("Moving to enemy maybe")
@@ -329,7 +335,8 @@ class Strategy:
                     return decisions.attack_monster(enemies[0])
 
                 path = self.get_path(self.curr_pos, enemies[0].position, dangerous_pos_hashes)
-                next_pos = path[0]
+                path_index = min(max(self.my_player.get_speed(), 1) - 1, len(path - 1))
+                next_pos = path[path_index]
                 self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
                 return decisions.move(next_pos)
             
@@ -356,7 +363,7 @@ class Strategy:
             if monster.get_current_health() > 0:
                 enemies.append(monster)
         # sort by level then distance
-        enemies = sorted(enemies, key=lambda m: (m.get_level(), m.position.manhattan_distance(pos)))
+        enemies = sorted(enemies, key=lambda m: (9999999 - m.get_level(), m.position.manhattan_distance(pos)))
         return enemies
         # for delta in deltas:
         #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
@@ -401,12 +408,14 @@ class Strategy:
             if self.equal_pos(pos, end):
                 # backtrack
                 bt_hash = self.hash_pos(pos)
+                bt_path = deque([])
                 while bt_hash in visited:
                     prev_node_hash = visited[bt_hash]
+                    next_node = self.read_pos_hash(bt_hash)
+                    bt_path.appendleft(next_node)
                     if prev_node_hash == self.hash_pos(start):
-                        next_node = self.read_pos_hash(bt_hash)
                         self.logger.info("Bfs path start {} next {} end {}".format(self.get_position_str(start), self.get_position_str(next_node), self.get_position_str(end)))
-                        return [next_node]
+                        return bt_path
                     bt_hash = prev_node_hash
                 break
             for delta in deltas:
