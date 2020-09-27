@@ -230,6 +230,7 @@ class Strategy:
         # analyze enemies, remove those that would kill us 
         sorted_difficulty_enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
         enemies: list[Monster] = []
+        dangerous_pos_hashes: set[int] = set()
         for enemy in sorted_difficulty_enemies:
             m_health = enemy.get_current_health()
             m_attack = enemy.get_attack()
@@ -250,6 +251,20 @@ class Strategy:
             my_turns_to_win = m_health / p_actual_damage_per_turn
             if (my_turns_to_win < enemy_turns_to_win - 1):
                 enemies.append(enemy)
+            else: 
+                dangerous_pos_hashes.add(self.hash_pos(enemy.position))
+                deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+                # TODO: dont hardcode aggro range and the deltas to use
+                if enemy.get_aggro_range() > 1:
+                    deltas = bfs_deltas[4]
+                else:
+                    deltas = bfs_deltas[1]
+                for delta in deltas:
+                    dx = delta[0]
+                    dy = delta[1]
+                    check_pos: Position = self.create_pos(enemy.position.x + dx, enemy.position.y + dy)
+                    # tile: Tile = self.player_board.get_tile_at(check_pos)
+                    dangerous_pos_hashes.add(self.hash_pos(check_pos))
 
         if (len(enemies) == 0):
             self.logger.info("no killable enemies found, resting")
@@ -281,7 +296,7 @@ class Strategy:
         self.logger.info("====ROLE " + self.role + "====")
         if (self.role == roles.REST):
             sp = self.my_player.get_spawn_point()
-            path = self.get_path(self.curr_pos, sp)
+            path = self.get_path(self.curr_pos, sp, dangerous_pos_hashes)
             self.logger.info("Moving to " + self.get_position_str(path[0])  + " to get to spawn point to rest at " + self.get_position_str(sp))
             decision = decisions.move(path[0])
             self.logger.info("Moving!")
@@ -300,7 +315,7 @@ class Strategy:
                 decision = decisions.pick_up_item(target_index)
                 return decision
             self.logger.info("Moving to pick up gear at " + self.get_position_str(target_pos) + ", index: " + str(target_index))
-            path = self.get_path(self.curr_pos, target_pos)
+            path = self.get_path(self.curr_pos, target_pos, dangerous_pos_hashes)
             decision = decisions.move(path[0])
             return decision
         elif (self.role == roles.GAIN_XP):
@@ -313,7 +328,7 @@ class Strategy:
                     self.logger.info("Enemy at " + self.get_position_str(enemy_pos) +" within range to attack");
                     return decisions.attack_monster(enemies[0])
 
-                path = self.get_path(self.curr_pos, enemies[0].position)
+                path = self.get_path(self.curr_pos, enemies[0].position, dangerous_pos_hashes)
                 next_pos = path[0]
                 self.logger.info("Moving to enemy " + str(self.get_position_str(next_pos)))
                 return decisions.move(next_pos)
@@ -367,7 +382,7 @@ class Strategy:
 
 
     # greedy for now
-    def get_path(self, start: Position, end: Position):
+    def get_path(self, start: Position, end: Position, avoid_hashes: set[int]):
         deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
         # deltas = bfs_deltas[1024]
         lowest = start.manhattan_distance(end)
@@ -401,7 +416,7 @@ class Strategy:
                 tile: Tile = self.player_board.get_tile_at(check_pos)
                 if tile.type == "BLANK":
                     check_hash = self.hash_pos(check_pos)
-                    if check_hash not in visited:
+                    if check_hash not in visited and check_hash not in avoid_hashes:
                         queue.append(check_pos)
                         visited[check_hash] = curr_hash
                 else:
