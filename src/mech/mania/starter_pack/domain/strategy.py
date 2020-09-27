@@ -19,6 +19,7 @@ from mech.mania.starter_pack.domain.model.items.item import Item
 from mech.mania.starter_pack.domain.model.items.shoes import Shoes
 from mech.mania.starter_pack.domain.model.items.weapon import Weapon
 import mech.mania.starter_pack.domain.decisions as decisions
+from mech.mania.starter_pack.domain.model.items.wearable import Wearable
 import mech.mania.starter_pack.domain.roles as roles
 
 class Strategy:
@@ -77,6 +78,7 @@ class Strategy:
         ### store our current stats and inven ###
         weapon: Weapon = self.my_player.get_weapon() # should always be index 0
         hat: Hat = self.my_player.get_hat() # always index 1
+        shoes: Shoes = self.my_player.get_shoes()
         clothes: Clothes = self.my_player.get_clothes() # always index 2
 
         self.logger.info("Curr Weapon: ATK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
@@ -86,7 +88,7 @@ class Strategy:
         best_wep_to_equip: Weapon = None
         best_wep_to_equip_index: int = None
         for i, item in enumerate(inven):
-            self.logger.info("Inven {} - {}".format(i, type(item)))
+            self.logger.info("Inven {} - {}".format(i, item))
             if isinstance(item, Weapon):
                 if item.get_attack() > weapon.attack:
                     best_wep_to_equip = item
@@ -98,9 +100,24 @@ class Strategy:
 
         # BFS search around for stuff
         deltas_1024 = bfs_deltas[1024]
-        best_wep_found: Weapon = None
-        best_wep_found_pos: Position = None
-        best_wep_found_index: int = None
+        best_gears_found: dict[str, Wearable] = {
+            'weapon': None,
+            'clothes': None,
+            'shoes': None,
+            'hat': None,
+        }
+        best_gears_found_pos: dict[str, Position] = {
+            'weapon': None,
+            'clothes': None,
+            'shoes': None,
+            'hat': None,
+        }
+        best_gears_found_index: dict[str, Position] = {
+            'weapon': None,
+            'clothes': None,
+            'shoes': None,
+            'hat': None,
+        }
         for delta in deltas_1024:
             dx = delta[0]
             dy = delta[1]
@@ -116,21 +133,52 @@ class Strategy:
                 self.logger.info("Found items!")
             for i, item in enumerate(items_on_tile):
                 self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
-                if isinstance(item, Weapon):
-                    self.logger.info("Found weapon")
+                if isinstance(item, Wearable):
                     time_to_delete = item.turns_to_deletion
-                    # dont pick up weapons that take too long to retrieve
                     if (self.curr_pos.manhattan_distance(check_pos) >= time_to_delete - 2):
                         continue
+                    if isinstance(item, Weapon):
+                        self.logger.info("Found weapon")
+                        # dont pick up weapons that take too long to retrieve
                         
-                    # best weapon to pickup is one that deals more damage, and more damage than all weapons on map that are found
-                    if (item.get_attack() > weapon.attack):
-                        if (best_wep_found == None or item.get_attack() > best_wep_found.get_attack()):
-                            best_wep_found = item
-                            best_wep_found_pos = check_pos
-                            best_wep_found_index = i
+                            
+                        # best weapon to pickup is one that deals more damage, and more damage than all weapons on map that are found
+                        if (item.get_attack() > weapon.attack):
+                            if (best_gears_found['weapon'] == None or item.get_attack() > best_gears_found['weapon'].get_attack()):
+                                best_gears_found['weapon'] = item
+                                best_gears_found_pos['weapon'] = check_pos
+                                best_gears_found_index['weapon'] = i
+                    elif isinstance(item, Clothes):
+                        item_val = self.value_of_wearable(item)
+                        if item_val > self.value_of_wearable(clothes):
+                            if (best_gears_found['clothes'] == None or item_val > self.value_of_wearable(best_gears_found['clothes'])):
+                                best_gears_found['clothes'] = item
+                                best_gears_found_pos['clothes'] = check_pos
+                                best_gears_found_index['clothes'] = i
+                    elif isinstance(item, Shoes):
+                        item_val = self.value_of_wearable(item)
+                        if item_val > self.value_of_wearable(shoes):
+                            if (best_gears_found['shoes'] == None or item_val > self.value_of_wearable(best_gears_found['shoes'])):
+                                best_gears_found['shoes'] = item
+                                best_gears_found_pos['shoes'] = check_pos
+                                best_gears_found_index['shoes'] = i
+                    elif isinstance(item, Hat):
+                        item_val = self.value_of_wearable(item)
+                        if item_val > self.value_of_wearable(hat):
+                            if (best_gears_found['hat'] == None or item_val > self.value_of_wearable(best_gears_found['hat'])):
+                                best_gears_found['hat'] = item
+                                best_gears_found_pos['hat'] = check_pos
+                                best_gears_found_index['hat'] = i
 
-
+        gears_to_pickup = 0
+        for i, (k, v) in enumerate(best_gears_found.items()):
+            item: Wearable = v
+            if item != None:
+                gears_to_pickup += 1
+                if isinstance(item, Weapon):
+                    self.logger.info("best gear: weapon, ATK {}".format(item.attack))
+                else: 
+                    self.logger.info("best gear: {}".format(self.get_item_stats_str(item)))
         # analyze enemies, remove those that would kill us 
         sorted_difficulty_enemies: list[Monster] = self.get_all_enemies(self.curr_pos)
         enemies: list[Monster] = []
@@ -159,8 +207,9 @@ class Strategy:
             self.logger.info("no killable enemies found, resting")
             self.role = roles.REST
 
-        if (best_wep_found != None):
-            self.role = roles.PICK_UP_WEAPON
+        if (gears_to_pickup > 0):
+            # self.role = roles.PICK_UP_GEAR
+            pass
         
         # if last_action is not None and last_action == "PICKUP":
         #     self.memory.set_value("last_action", "EQUIP")
@@ -189,13 +238,20 @@ class Strategy:
             decision = decisions.move(path[0])
             self.logger.info("Moving!")
             return decision
-        elif (self.role == roles.PICK_UP_WEAPON):
-            target_pos = best_wep_found_pos;
+        elif (self.role == roles.PICK_UP_GEAR):
+            target_pos = self.curr_pos;
+            target_index = 0
+            for i, (k, v) in enumerate(best_gears_found.items()):
+                item: Wearable = v
+                if item != None:
+                    target_pos = best_gears_found_pos[k]
+                    target_index = best_gears_found_index[k]
+                    break
             if (self.equal_pos(target_pos, self.curr_pos)):
-                self.logger.info("Picking up weapon now under player into ind 0")
-                decision = decisions.pick_up_item(self.curr_pos, best_wep_found_index)
+                self.logger.info("Picking up gear under player with index {}".format(target_index))
+                decision = decisions.pick_up_item(self.curr_pos, target_index)
                 return decision
-            self.logger.info("Moving to pick up weapon at " + self.get_position_str(target_pos) + ", index: " + str(best_wep_found_index))
+            self.logger.info("Moving to pick up gear at " + self.get_position_str(target_pos) + ", index: " + str(target_index))
             path = self.get_path(self.curr_pos, target_pos)
             decision = decisions.move(path[0])
             return decision
@@ -340,3 +396,9 @@ class Strategy:
             item.stats.flat_experience_change,
             item.stats.flat_attack_change,
             item.stats.flat_defense_change)
+
+    def value_of_wearable(self, item: Item):
+        if isinstance(item, Wearable):
+            stats = item.stats
+            return stats.flat_defense_change * 10 + stats.flat_experience_change + stats.flat_health_change +stats.flat_regen_per_turn * 15 + stats.percent_attack_change * 5
+        return 0
