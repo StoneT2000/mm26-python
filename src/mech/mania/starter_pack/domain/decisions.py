@@ -29,3 +29,9 @@ def equip_item(ind=0):
         action_position=None,
         action_index=ind
     )
+def drop_item(ind=0):
+    return CharacterDecision(
+        decision_type="DROP",
+        action_position=None,
+        action_index=ind
+    )

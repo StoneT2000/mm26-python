@@ -92,31 +92,46 @@ class Strategy:
         best_gear_to_equip: Wearable = None
         best_gear_to_equip_index: int = None
         for i, item in enumerate(inven):
-            self.logger.info("Inven {} - {}".format(i, item))
+            self.logger.info("Inven {} - {} - stats: {}".format(i, item, self.get_item_stats_str(item)))
             if isinstance(item, Weapon):
                 if item.get_attack() > weapon.attack:
                     self.logger.info("Equipping weapon at index {} with atk: {}".format(i, item.get_attack()))
                     return decisions.equip_item(i)
+                else:
+                    self.logger.info("Dropping weapon at {}".format(i))
+                    return decisions.drop_item(i)
             elif isinstance(item, Clothes):
                 item_val = self.value_of_wearable(item)
                 if (item_val > self.value_of_wearable(clothes)):
                     self.logger.info("Equipping clothes at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
                     return decisions.equip_item(i)
+                else:
+                    self.logger.info("Dropping clothes at {}".format(i))
+                    return decisions.drop_item(i)
             elif isinstance(item, Hat):
                 item_val = self.value_of_wearable(item)
                 if (item_val > self.value_of_wearable(hat)):
                     self.logger.info("Equipping hat at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
                     return decisions.equip_item(i)
+                else:
+                    self.logger.info("Dropping hat at {}".format(i))
+                    return decisions.drop_item(i)
             elif isinstance(item, Shoes):
                 item_val = self.value_of_wearable(item)
                 if (item_val > self.value_of_wearable(shoes)):
                     self.logger.info("Equipping shoes at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
                     return decisions.equip_item(i)
+                else:
+                    self.logger.info("Dropping shoes at {}".format(i))
+                    return decisions.drop_item(i)
             elif isinstance(item, Accessory):
                 item_val = self.value_of_wearable(item)
                 if (item_val > self.value_of_wearable(accessory)):
                     self.logger.info("Equipping accessory at index {} with stats: {}".format(i, self.get_item_stats_str(item))) 
                     return decisions.equip_item(i)
+                else:
+                    self.logger.info("Dropping accessory at {}".format(i))
+                    return decisions.drop_item(i)
 
         # BFS search around for stuff
         deltas_1024 = bfs_deltas[1024]
