@@ -85,6 +85,7 @@ class Strategy:
         best_wep_to_equip: Weapon = None
         best_wep_to_equip_index: int = None
         for i, item in enumerate(inven):
+            self.logger.info("Inven {} - {}".format(i, type(item)))
             if isinstance(item, Weapon):
                 if item.get_attack() > weapon.attack:
                     best_wep_to_equip = item
@@ -141,7 +142,6 @@ class Strategy:
             p_attack = self.my_player.get_attack()
             p_defence = self.my_player.get_defense()
             p_health = self.my_player.get_current_health()
-            self.logger.info("Mattack {}".format(m_attack))
             m_damage_per_turn = m_wep_attack * ( (25 + m_attack) / 100)
             m_actual_damage_per_turn = math.ceil(m_damage_per_turn - min(p_defence, 0.8 * m_damage_per_turn))
             
