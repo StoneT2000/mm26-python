@@ -378,7 +378,7 @@ class Strategy:
             if monster.get_current_health() > 0:
                 enemies.append(monster)
         # sort by level then distance
-        enemies = sorted(enemies, key=lambda m: (9999999 - m.get_level(), m.position.manhattan_distance(pos)))
+        enemies = sorted(enemies, key=lambda m: (m.position.manhattan_distance(pos), 9999999 - m.get_level()))
         return enemies
         # for delta in deltas:
         #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
