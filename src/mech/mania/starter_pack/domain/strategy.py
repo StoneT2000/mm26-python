@@ -55,7 +55,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 3.2")
+        self.logger.info("Version: 4.0")
 
         
         
@@ -242,10 +242,10 @@ class Strategy:
             p_attack = self.my_player.get_attack()
             p_defence = self.my_player.get_defense()
             p_health = self.my_player.get_current_health()
-            m_damage_per_turn = m_wep_attack * ( (25 + m_attack) / 100)
+            m_damage_per_turn = m_wep_attack * ((25 + m_attack) / 100)
             m_actual_damage_per_turn = math.ceil(m_damage_per_turn - min(p_defence, 0.8 * m_damage_per_turn))
             
-            p_damage_per_turn = p_wep_attack * ((25 + p_attack) / 100)
+            p_damage_per_turn = p_wep_attack * ((75 + p_attack) / 100)
             p_actual_damage_per_turn = math.ceil(p_damage_per_turn - min(m_defence, 0.8 * p_damage_per_turn))
             # self.logger.info("Monster at {} deals {} dmg/turn; atk:{}, p_def:".format(self.get_position_str(enemy.get_position()), m_actual_damage_per_turn, m_attack, p_defence))
             # self.logger.info("Player deals {} dmg/turn".format(p_actual_damage_per_turn))
