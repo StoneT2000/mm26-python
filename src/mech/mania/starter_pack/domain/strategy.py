@@ -523,5 +523,5 @@ class Strategy:
                 replacedItem = self.my_player.get_shoes()
             stats = item.stats
             # p_health_change = stats.percent_health_change * (self.my_player.get_max_health() - replacedItem.stats.flat_health_change)
-            return stats.flat_defense_change * 10 + stats.flat_experience_change + stats.flat_health_change +stats.flat_regen_per_turn * 15 + stats.percent_attack_change * 5 + stats.flat_speed_change * 20
+            return stats.flat_defense_change * 30 + stats.flat_experience_change * 10 + stats.flat_health_change + stats.flat_regen_per_turn * 45 + stats.percent_attack_change * 5 + stats.flat_speed_change * 60
         return 0
