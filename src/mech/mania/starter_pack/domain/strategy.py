@@ -55,7 +55,7 @@ class Strategy:
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
-        self.logger.info("Version: 3.1")
+        self.logger.info("Version: 3.2")
 
         
         
@@ -83,7 +83,8 @@ class Strategy:
         clothes: Clothes = self.my_player.get_clothes() # always index 2
         accessory: Accessory = self.my_player.get_accessory()
 
-        self.logger.info("Curr Weapon: ATK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
+        self.logger.info("Curr Weapon: ATTACK {}, RANGE {}, SPLASH {}".format(weapon.get_attack(), weapon.get_range(), weapon.get_splash_radius()))
+        self.logger.info("Curr Weapon P Stats: {}".format(self.get_item_stats_str(weapon)))
         self.logger.info("Curr Clothes: {}".format(self.get_item_stats_str(clothes)))
         self.logger.info("Curr Hat: {}".format(self.get_item_stats_str(hat)))
         self.logger.info("Curr Shoes: {}".format(self.get_item_stats_str(shoes)))
@@ -363,7 +364,7 @@ class Strategy:
             if monster.get_current_health() > 0:
                 enemies.append(monster)
         # sort by level then distance
-        enemies = sorted(enemies, key=lambda m: (9999999 - m.get_level(), m.position.manhattan_distance(pos)))
+        enemies = sorted(enemies, key=lambda m: (m.position.manhattan_distance(pos), 9999999 - m.get_level()))
         return enemies
         # for delta in deltas:
         #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
