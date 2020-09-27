@@ -2,6 +2,7 @@ import logging
 from logging import Logger
 import math
 import random
+from collections import deque
 from mech.mania.starter_pack.domain.model.board.board import Board
 from mech.mania.starter_pack.domain.model.characters.character_decision import CharacterDecision
 from mech.mania.starter_pack.domain.model.characters.monster import Monster
@@ -138,7 +139,7 @@ class Strategy:
                     return decisions.drop_item(i)
 
         # BFS search around for stuff
-        deltas_1024 = bfs_deltas[1024]
+        deltas_128 = bfs_deltas[128]
         best_gears_found: dict[str, Wearable] = {
             'weapon': None,
             'clothes': None,
@@ -160,7 +161,7 @@ class Strategy:
             'hat': None,
             'accessory': None,
         }
-        for delta in deltas_1024:
+        for delta in deltas_128:
             dx = delta[0]
             dy = delta[1]
             check_pos = self.create_pos(self.curr_pos.x + dx, self.curr_pos.y + dy)
@@ -368,19 +369,43 @@ class Strategy:
     # greedy for now
     def get_path(self, start: Position, end: Position):
         deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
+        # deltas = bfs_deltas[1024]
         lowest = start.manhattan_distance(end)
         path = [start]
-        for delta in deltas:
-            dx = delta[0]
-            dy = delta[1]
-            check_pos: Position = self.create_pos(self.curr_pos.x + dx, self.curr_pos.y + dy)
-            dist = check_pos.manhattan_distance(end)
-            if dist < lowest:
-                path[0] = check_pos
-                lowest = dist
+
+        queue = deque([start])
+        visited = {} # map node to its next node, so start maps to next_node, 2nd to last node maps to end
+        while(len(queue) > 0):
+            pos = queue.popleft()
+            # reach end, return next node
+            curr_hash = self.hash_pos(pos)
+            if self.equal_pos(pos, end):
+                next_node = self.read_pos_hash(visited[self.hash_pos(start)])
+                return [next_node]
+            for delta in deltas:
+                dx = delta[0]
+                dy = delta[1]
+                check_pos: Position = self.create_pos(pos.x + dx, pos.y + dy)
+                tile: Tile = self.player_board.get_tile_at(check_pos)
+                if tile.type == "BLANK":
+                    check_hash = self.hash_pos(check_pos)
+                    if check_hash not in visited:
+                        queue.append(check_pos)
+                        visited[curr_hash] = check_hash
+                else:
+                    pass
+                # dist = check_pos.manhattan_distance(end)
+                # if dist < lowest:
+                #     path[0] = check_pos
+                #     lowest = dist
+        self.logger.info("exhausted bfs...")
         return path
 
 
+    def read_pos_hash(self, hash: int):
+        return self.create_pos(hash // 10000, hash % 10000)
+    def hash_pos(self, pos: Position):
+        return pos.x * 10000 + pos.y
     def pick_open_spot_to_move(self) -> Position:
         deltas = [(0, 1), (-1, 0), (0, -1), (1, 0)]
         movable_deltas = []
