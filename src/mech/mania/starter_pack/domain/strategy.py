@@ -18,6 +18,8 @@ from mech.mania.starter_pack.domain.model.items.consumable import Consumable
 from mech.mania.starter_pack.domain.model.items.hat import Hat
 from mech.mania.starter_pack.domain.model.items.item import Item
 from mech.mania.starter_pack.domain.model.items.shoes import Shoes
+from mech.mania.starter_pack.domain.model.items.status_modifier import StatusModifier
+from mech.mania.starter_pack.domain.model.items.temp_status_modifier import TempStatusModifier
 from mech.mania.starter_pack.domain.model.items.weapon import Weapon
 import mech.mania.starter_pack.domain.decisions as decisions
 from mech.mania.starter_pack.domain.model.items.wearable import Wearable
@@ -98,7 +100,10 @@ class Strategy:
         best_gear_to_equip_index: int = None
         for i, item in enumerate(inven):
             self.logger.info("Inven {} - {} - stats: {}".format(i, item, self.get_item_stats_str(item)))
-            if isinstance(item, Weapon):
+            if isinstance(item, Consumable):
+                self.logger.info("Equipping consumable")
+                return decisions.equip_item(i)
+            elif isinstance(item, Weapon):
                 item_val = self.value_of_wearable(item)
                 if item_val > self.value_of_wearable(weapon):
                     self.logger.info("Equipping weapon at index {} with stats: {}".format(i, self.get_item_stats_str(item)))
@@ -147,6 +152,7 @@ class Strategy:
             'shoes': None,
             'hat': None,
             'accessory': None,
+            'con': None,
         }
         best_gears_found_pos: dict[str, Position] = {
             'weapon': None,
@@ -154,6 +160,7 @@ class Strategy:
             'shoes': None,
             'hat': None,
             'accessory': None,
+            'con': None,
         }
         best_gears_found_index: dict[str, Position] = {
             'weapon': None,
@@ -161,6 +168,7 @@ class Strategy:
             'shoes': None,
             'hat': None,
             'accessory': None,
+            'con': None,
         }
         for delta in deltas_128:
             dx = delta[0]
@@ -175,7 +183,13 @@ class Strategy:
             # search for better items
             for i, item in enumerate(items_on_tile):
                 self.logger.info("At " + self.get_position_str(check_pos) +", item - " + self.get_item_stats_str(item))
-                if isinstance(item, Wearable):
+                if isinstance(item, Consumable):
+                    con: Consumable = item
+                    if (con.effect.turns_left > 4):
+                        best_gears_found['con'] = con
+                        best_gears_found_index['con'] = i
+                        best_gears_found_pos['con'] = check_pos
+                elif isinstance(item, Wearable):
                     time_to_delete = item.turns_to_deletion
                     if (self.curr_pos.manhattan_distance(check_pos) >= time_to_delete - 2):
                         continue
@@ -219,7 +233,6 @@ class Strategy:
                                 best_gears_found['accessory'] = item
                                 best_gears_found_pos['accessory'] = check_pos
                                 best_gears_found_index['accessory'] = i
-
         gears_to_pickup = 0
         for i, (k, v) in enumerate(best_gears_found.items()):
             item: Wearable = v
@@ -365,7 +378,7 @@ class Strategy:
             if monster.get_current_health() > 0:
                 enemies.append(monster)
         # sort by level then distance
-        enemies = sorted(enemies, key=lambda m: (m.position.manhattan_distance(pos), 9999999 - m.get_level()))
+        enemies = sorted(enemies, key=lambda m: (9999999 - m.get_level(), m.position.manhattan_distance(pos)))
         return enemies
         # for delta in deltas:
         #     check_pos = pos.create(pos.x + delta[0], pos.y + delta[1], pos.get_board_id())
@@ -495,7 +508,7 @@ class Strategy:
         elif (isinstance(item, Shoes)):
             return "Shoes: Stats {}".format(self.stats_str(item))
         elif (isinstance(item, Consumable)):
-            return "Con: Stats {}".format(item.get_effect())
+            return "Con: Stats {}".format(self.stats_str_consumable(item.effect))
         return "smth else"
 
     def stats_str(self, item: Item):
@@ -509,6 +522,18 @@ class Strategy:
             item.stats.percent_attack_change,
             item.stats.percent_defense_change,
             item.stats.percent_health_change)
+    def stats_str_consumable(self, stats: TempStatusModifier):
+        return 'fgpt {}, spd {}, hp {}, xp {}, atk {}, def {}, %atk {}, %def {}, %hp {}, turns left {}'.format(
+            stats.flat_regen_per_turn,
+            stats.flat_speed_change,
+            stats.flat_health_change,
+            stats.flat_experience_change,
+            stats.flat_attack_change,
+            stats.flat_defense_change,
+            stats.percent_attack_change,
+            stats.percent_defense_change,
+            stats.percent_health_change,
+            stats.turns_left)
 
     def value_of_wearable(self, item: Item):
         if isinstance(item, Wearable):
