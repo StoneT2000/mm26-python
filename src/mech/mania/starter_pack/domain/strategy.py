@@ -50,7 +50,7 @@ class Strategy:
         self.api = API(game_state, player_name)
         self.game_state = game_state
         self.my_player = game_state.get_all_players()[player_name]
-        self.board = game_state.get_pvp_board()
+        # self.board = game_state.get_pvp_board()
         self.player_board = game_state.get_board(player_name)
         self.curr_pos = self.my_player.get_position()
 
@@ -85,6 +85,7 @@ class Strategy:
 
         # if inventory has better weapon, equip it
         inven: list[Item] = self.my_player.get_inventory()
+        self.logger.info("Have {} inventory items".format(len(inven)))
         best_wep_to_equip: Weapon = None
         best_wep_to_equip_index: int = None
         for i, item in enumerate(inven):
@@ -208,7 +209,7 @@ class Strategy:
             self.role = roles.REST
 
         if (gears_to_pickup > 0):
-            # self.role = roles.PICK_UP_GEAR
+            self.role = roles.PICK_UP_GEAR
             pass
         
         # if last_action is not None and last_action == "PICKUP":
@@ -249,7 +250,7 @@ class Strategy:
                     break
             if (self.equal_pos(target_pos, self.curr_pos)):
                 self.logger.info("Picking up gear under player with index {}".format(target_index))
-                decision = decisions.pick_up_item(self.curr_pos, target_index)
+                decision = decisions.pick_up_item(target_index)
                 return decision
             self.logger.info("Moving to pick up gear at " + self.get_position_str(target_pos) + ", index: " + str(target_index))
             path = self.get_path(self.curr_pos, target_pos)
