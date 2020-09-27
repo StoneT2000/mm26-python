@@ -497,16 +497,31 @@ class Strategy:
         return "smth else"
 
     def stats_str(self, item: Item):
-        return 'fgpt {}, spd {}, hp {}, xp {}, atk {}, def {}'.format(
+        return 'fgpt {}, spd {}, hp {}, xp {}, atk {}, def {}, %atk {}, %def {}, %hp {}'.format(
             item.stats.flat_regen_per_turn,
             item.stats.flat_speed_change,
             item.stats.flat_health_change,
             item.stats.flat_experience_change,
             item.stats.flat_attack_change,
-            item.stats.flat_defense_change)
+            item.stats.flat_defense_change,
+            item.stats.percent_attack_change,
+            item.stats.percent_defense_change,
+            item.stats.percent_health_change)
 
     def value_of_wearable(self, item: Item):
         if isinstance(item, Wearable):
+            replacedItem = None
+            if (isinstance(item, Weapon)):
+                replacedItem = self.my_player.get_weapon()
+            elif (isinstance(item, Clothes)):
+                replacedItem = self.my_player.get_clothes()
+            elif (isinstance(item, Accessory)):
+                replacedItem = self.my_player.get_accessory()
+            elif (isinstance(item, Hat)):
+                replacedItem = self.my_player.get_hat()
+            elif (isinstance(item, Shoes)):
+                replacedItem = self.my_player.get_shoes()
             stats = item.stats
-            return stats.flat_defense_change * 10 + stats.flat_experience_change + stats.flat_health_change +stats.flat_regen_per_turn * 15 + stats.percent_attack_change * 5
+            # p_health_change = stats.percent_health_change * (self.my_player.get_max_health() - replacedItem.stats.flat_health_change)
+            return stats.flat_defense_change * 10 + stats.flat_experience_change + stats.flat_health_change +stats.flat_regen_per_turn * 15 + stats.percent_attack_change * 5 + stats.flat_speed_change * 20
         return 0
